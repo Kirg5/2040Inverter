@@ -4,7 +4,21 @@
 
 RP2040_PWM* PWM_Instance[6];
 
-// MOSFET pins
+  // Config Vars
+  int wheelSize = 27;
+  int multiPulse_minFreq = 8000;
+  int multiPulse_maxFreq = 30000;
+  uint32_t freqSwitching = 8000;
+  int PWMMode = 1; 
+
+  //PWMMode 1 = Square wave, static frequency
+  //PWMMode 2 = Square wave, dynamic frequency
+  //PWMMode 3 = Sine wave, static frequency
+  //PWMMode 4 = Sine wave, dynamic frequency
+  //PWMMode 5 = Multi pulse synchronous sine
+  //PWMMode 6 = Square wave tone
+  
+  // MOSFET pins
   const int phaseAGateLowPin = 18;
   const int phaseBGateLowPin = 19;
   const int phaseCGateLowPin = 20;
@@ -28,28 +42,23 @@ RP2040_PWM* PWM_Instance[6];
   const int ledG = 5;
   const int ledB = 6;
   const int Fan = 7;
+  const int OCP_Int = 24;
 
-  // Vars
+  // Misc Vars
   int currentAngle = 0;
   int voltageRaw = 0;
   int currentRaw = 0;
   float voltage = 0;
   float current = 0;
-  uint32_t freqSwitching = 8000;
-  int PWM = 60;
-  int PWMMode = 1; 
+  float speed = 0;
+  float rpm = 0;
+  float acceleration = 0;
+  float jerk = 0;
+  int timer = 0;
+  int period = 0;
+  int dutyCycle = 0;
+  uint32_t freqSwitchingDyn = 1000;
 
-  //PWMMode 1  = Square wave, static frequency
-  //PWMMode 2  = Square wave, dynamic frequency
-  //PWMMode 3  = Stepped sine wave, static frequency
-  //PWMMode 4  = Stepped sine wave, dynamic frequency 
-  //PWMMode 5  = Sine wave, static frequency
-  //PWMMode 6  = Sine wave, dynamic frequency
-  //PWMMode 7  = 7 pulse synchronous sine
-  //PWMMode 8  = 5 pulse synchronous sine
-  //PWMMode 9  = 3 pulse synchronous sine
-  //PWMMode 10 = Square wave tone
-  
   void setup() {
   analogWrite(Fan, 255);
 
@@ -103,10 +112,12 @@ void loop()
   // Calculate electrical angle
          if (hallSensorAState == HIGH && hallSensorBState == LOW && hallSensorCState == HIGH) {
     currentAngle = 0;
+    int time = millis();
   } else if (hallSensorAState == HIGH && hallSensorBState == LOW && hallSensorCState == LOW) {
     currentAngle = 60;
   } else if (hallSensorAState == HIGH && hallSensorBState == HIGH && hallSensorCState == LOW) {
     currentAngle = 120;
+    int period = (millis() - timer);
   } else if (hallSensorAState == LOW && hallSensorBState == HIGH && hallSensorCState == LOW) {
     currentAngle = 180;
   } else if (hallSensorAState == LOW && hallSensorBState == HIGH && hallSensorCState == HIGH) {
@@ -115,81 +126,142 @@ void loop()
     currentAngle = 300;
   }
 
+  //Calculate RPM
+  float rpm = (60000/period);
+
+  //Calculate Speed from RPM
+  float speed = (rpm * wheelSize 0.00479);
+
+  //Placeholder dynamic frequency eqn
+  freqSwitchingDyn = ((rpm * 0.1) + 2000);
+
   //Motor commutation
-  if (PWMMode == 1) {
+         if (PWMMode == 1) { // Square wave, static frequency
     if (currentAngle == 0) {
-      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, 0);
-      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitching, PWM);
-      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, 0);
-
-      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitching, PWM);
+      //High Side
+      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitching, dutyCycle);
       PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitching, 0);
       PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitching, 0);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, 0);
+      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitching, dutyCycle);
+      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, 0);
     } else if (currentAngle == 60) {
-      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, 0);
-      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitching, 0);
-      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, PWM);
-
-      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitching, PWM);
+      //High Side
+      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitching, dutyCycle);
       PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitching, 0);
       PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitching, 0);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, 0);
+      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitching, 0);
+      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, dutyCycle);
     } else if (currentAngle == 120) {
+      //High Side
+      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitching, 0);
+      PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitching, dutyCycle);
+      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitching, 0);
+      //Low Side
       PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, 0);
       PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitching, 0);
-      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, PWM);
-
-      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitching, 0);
-      PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitching, PWM);
-      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitching, 0);
+      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, dutyCycle);
     } else if (currentAngle == 180) {
-      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, PWM);
-      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitching, 0);
-      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, 0);
-
+      //High Side
       PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitching, 0);
-      PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitching, PWM);
+      PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitching, dutyCycle);
       PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitching, 0);
-    } else if (currentAngle == 240) {
-      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, PWM);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, dutyCycle);
       PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitching, 0);
       PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, 0);
-
+    } else if (currentAngle == 240) {
+      //High Side
       PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitching, 0);
       PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitching, 0);
-      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitching, PWM);
-    } else if (currentAngle == 300) {
-      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, 0);
-      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitching, PWM);
+      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitching, dutyCycle);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, dutyCycle);
+      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitching, 0);
       PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, 0);
-
+    } else if (currentAngle == 300) {
+      //High Side
       PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitching, 0);
       PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitching, 0);
-      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitching, PWM);
+      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitching, dutyCycle);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitching, 0);
+      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitching, dutyCycle);
+      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, 0);
     }
-  } else if (PWMMode == 2) { // Same as previous mode but dynamic freq
+  } else if (PWMMode == 2) { // Square wave, dynamic frequency
+    if (currentAngle == 0) {
+      //High Side
+      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitchingDyn, dutyCycle);
+      PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitchingDyn, 0);
+      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitchingDyn, 0);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitchingDyn, 0);
+      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitchingDyn, dutyCycle);
+      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitchingDyn, 0);
+    } else if (currentAngle == 60) {
+      //High Side
+      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitchingDyn, dutyCycle);
+      PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitchingDyn, 0);
+      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitchingDyn, 0);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitchingDyn, 0);
+      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitchingDyn, 0);
+      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitchingDyn, dutyCycle);
+    } else if (currentAngle == 120) {
+      //High Side
+      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitchingDyn, 0);
+      PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitchingDyn, dutyCycle);
+      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitchingDyn, 0);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitchingDyn, 0);
+      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitchingDyn, 0);
+      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitchingDyn, dutyCycle);
+    } else if (currentAngle == 180) {
+      //High Side
+      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitchingDyn, 0);
+      PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitchingDyn, dutyCycle);
+      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitchingDyn, 0);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitchingDyn, dutyCycle);
+      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitchingDyn, 0);
+      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitchingDyn, 0);
+    } else if (currentAngle == 240) {
+      //High Side
+      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitchingDyn, 0);
+      PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitchingDyn, 0);
+      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitchingDyn, dutyCycle);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitchingDyn, dutyCycle);
+      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitchingDyn, 0);
+      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitchingDyn, 0);
+    } else if (currentAngle == 300) {
+      //High Side
+      PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitchingDyn, 0);
+      PWM_Instance[2]->setPWM(phaseBGateHighPin, freqSwitchingDyn, 0);
+      PWM_Instance[3]->setPWM(phaseCGateHighPin, freqSwitchingDyn, dutyCycle);
+      //Low Side
+      PWM_Instance[4]->setPWM(phaseAGateLowPin, freqSwitchingDyn, 0);
+      PWM_Instance[5]->setPWM(phaseBGateLowPin, freqSwitchingDyn, dutyCycle);
+      PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitchingDyn, 0);
+    }
+  } else if (PWMMode == 3) { // Sine wave, static frequency
 
-  } else if (PWMMode == 3) { // Mode 1 but 1/2 PWM
+  } else if (PWMMode == 4) { // Sine wave, dynamic frequency
 
-  } else if (PWMMode == 4) { // Same as previous mode but dynamic freq
+  } else if (PWMMode == 5) { // Multi pulse synchronous sine
 
-  } else if (PWMMode == 5) { // Full sine control
-
-  } else if (PWMMode == 6) { // Same as previous mode but dynamic freq
-
-  } else if (PWMMode == 7) { // Multipulse mode
-
-  } else if (PWMMode == 8) { // Multipulse mode again
-
-  } else if (PWMMode == 9) { // Multipulse mode yet again
-
-  } else if (PWMMode == 10) { // Similar to mode 2 but using tones
+  } else if (PWMMode == 6) { // Square wave tone
 
   }
 if (Serial.available() > 0) {
-  PWM = 250;
+  dutyCycle = 250;
 }
 
-analogWrite(LED_BUILTIN, PWM);
+analogWrite(LED_BUILTIN, dutyCycle);
 
 Serial.print("angle = ");
 Serial.print(currentAngle);
