@@ -5,8 +5,8 @@
 RP2040_PWM* PWM_Instance[6];
 
   // Config Vars
-  int wheelSize = 27;
-  int multiPulse_minFreq = 8000;
+  int wheelSize = 26;
+  int multiPulse_minFreq = 2000;
   int multiPulse_maxFreq = 30000;
   uint32_t freqSwitching = 8000;
   int PWMMode = 1; 
@@ -46,6 +46,7 @@ RP2040_PWM* PWM_Instance[6];
 
   // Misc Vars
   int currentAngle = 0;
+  int estimatedAngle = 0;
   int voltageRaw = 0;
   int currentRaw = 0;
   float voltage = 0;
@@ -57,7 +58,7 @@ RP2040_PWM* PWM_Instance[6];
   int timer = 0;
   int period = 0;
   int dutyCycle = 0;
-  uint32_t freqSwitchingDyn = 1000;
+  uint32_t freqSwitchingDyn = 0;
 
   void setup() {
   analogWrite(Fan, 255);
@@ -86,6 +87,8 @@ RP2040_PWM* PWM_Instance[6];
   // Setup ADC
   pinMode(currentSensePin, INPUT);
   pinMode(voltageSensePin, INPUT);
+  pinMode(tempSensePin, INPUT);
+  pinMode(ambientTempSensePin, INPUT);
 
   // Initialize serial
   Serial.begin(9600);
@@ -112,7 +115,7 @@ void loop()
   // Calculate electrical angle
          if (hallSensorAState == HIGH && hallSensorBState == LOW && hallSensorCState == HIGH) {
     currentAngle = 0;
-    int time = millis();
+    int timer = millis();
   } else if (hallSensorAState == HIGH && hallSensorBState == LOW && hallSensorCState == LOW) {
     currentAngle = 60;
   } else if (hallSensorAState == HIGH && hallSensorBState == HIGH && hallSensorCState == LOW) {
@@ -127,10 +130,10 @@ void loop()
   }
 
   //Calculate RPM
-  float rpm = (60000/period);
+  float rpm = (60000.0f/period);
 
   //Calculate Speed from RPM
-  float speed = (rpm * wheelSize 0.00479);
+  float speed = (rpm * wheelSize * 0.00479);
 
   //Placeholder dynamic frequency eqn
   freqSwitchingDyn = ((rpm * 0.1) + 2000);
