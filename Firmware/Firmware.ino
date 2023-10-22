@@ -1,5 +1,5 @@
 #include <RP2040_PWM.h>
-#include "Sine_LUT.h"
+#include "Sine.h"
 #include "Notes.h"
 
 RP2040_PWM* PWM_Instance[6];
