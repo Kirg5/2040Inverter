@@ -6,6 +6,7 @@ RP2040_PWM* PWM_Instance[6];
 
   // Config Vars
   int wheelSize = 26;
+  int polePairs = 42;
   int multiPulse_minFreq = 2000;
   int multiPulse_maxFreq = 30000;
   uint32_t freqSwitching = 8000;
@@ -130,7 +131,7 @@ void loop()
   }
 
   //Calculate RPM
-  float rpm = (60000.0f/period);
+  float rpm = (60000.0f/period/polePairs);
 
   //Calculate Speed from RPM
   float speed = (rpm * wheelSize * 0.00479);
