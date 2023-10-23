@@ -7,9 +7,12 @@ RP2040_PWM* PWM_Instance[6];
   // Config Vars
   int wheelSize = 26;
   int polePairs = 42;
-  int maxCurrent = 50;
-  int multiPulse_minFreq = 2000;
-  int multiPulse_maxFreq = 30000;
+  int maxForwardCurrent = 50;
+  int maxReverseCurrent = 10;
+  int seriesPairs = 20;
+  uint32_t multiPulse_minFreq = 2000;
+  uint32_t multiPulse_maxFreq = 30000;
+  uint32_t refenFreqSwitching = 1000;
   uint32_t freqSwitching = 8000;
   int PWMMode = 1; 
 
@@ -66,6 +69,7 @@ RP2040_PWM* PWM_Instance[6];
   int phaseTime2 = 0;
   int period = 0;
   int dutyCycle = 0;
+  int reverseDutyCycle = 0;
   int pulseCount = 0;
   uint32_t freqSwitchingDyn = 0;
 
@@ -141,12 +145,20 @@ void loop()
     currentAngle = 300;
   }
 
+  //Braking
+  if (reverseDutyCycle > 0) {
+    analogWrite(ledR, 255):
+    //Regen control loop here
+  } else {
+    analogWrite(ledR, 0)
+  }
+
   //Derivatives calculation
   if (lastAngle != currentAngle) {
-  int phaseTime2 = phaseTime1;
-  int phaseTime1 = (millis() - phaseTime0);
-  int lastAngle = currentAngle;
-  int phaseTime0 = millis();
+    int phaseTime2 = phaseTime1;
+    int phaseTime1 = (millis() - phaseTime0);
+    int lastAngle = currentAngle;
+    int phaseTime0 = millis();
   }
   //add the shit for slope and exponent here
 
