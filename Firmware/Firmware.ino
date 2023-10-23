@@ -48,6 +48,7 @@ RP2040_PWM* PWM_Instance[6];
   // Misc Vars
   int currentAngle = 0;
   int estimatedAngle = 0;
+  int lastAngle = 0;
   int voltageRaw = 0;
   int currentRaw = 0;
   float voltage = 0;
@@ -57,6 +58,9 @@ RP2040_PWM* PWM_Instance[6];
   float acceleration = 0;
   float jerk = 0;
   int timer = 0;
+  int phaseTime0 = 0;
+  int phaseTime1 = 0;
+  int phaseTime2 = 0;
   int period = 0;
   int dutyCycle = 0;
   uint32_t freqSwitchingDyn = 0;
@@ -129,6 +133,15 @@ void loop()
   } else if (hallSensorAState == LOW && hallSensorBState == LOW && hallSensorCState == HIGH) {
     currentAngle = 300;
   }
+
+  //Derivatives calculation
+  if (lastAngle === currentAngle) {
+  int phaseTime2 = phaseTime1;
+  int phaseTime1 = (millis() - phaseTime0);
+  int lastAngle = currentAngle;
+  int phaseTime0 = millis();
+  }
+  //add the shit for slope and exponent here
 
   //Calculate RPM
   float rpm = (60000.0f/period/polePairs);
@@ -253,7 +266,7 @@ void loop()
       PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitchingDyn, 0);
     }
   } else if (PWMMode == 3) { // Sine wave, static frequency
-
+      int estimatedAngle = (currentAngle + (phaseTime1 * idk));
   } else if (PWMMode == 4) { // Sine wave, dynamic frequency
 
   } else if (PWMMode == 5) { // Multi pulse synchronous sine
