@@ -7,6 +7,7 @@ RP2040_PWM* PWM_Instance[6];
   // Config Vars
   int wheelSize = 26;
   int polePairs = 42;
+  int maxCurrent = 50;
   int multiPulse_minFreq = 2000;
   int multiPulse_maxFreq = 30000;
   uint32_t freqSwitching = 8000;
@@ -18,6 +19,7 @@ RP2040_PWM* PWM_Instance[6];
   //PWMMode 4 = Sine wave, dynamic frequency
   //PWMMode 5 = Multi pulse synchronous sine
   //PWMMode 6 = Square wave tone
+  //PWMMode 7 = Power-on test
   
   // MOSFET pins
   const int phaseAGateLowPin = 18;
@@ -45,7 +47,7 @@ RP2040_PWM* PWM_Instance[6];
   const int Fan = 7;
   const int OCP_Int = 24;
 
-  // Misc Vars
+  // System Vars
   int currentAngle = 0;
   int estimatedAngle = 0;
   int lastAngle = 0;
@@ -53,6 +55,7 @@ RP2040_PWM* PWM_Instance[6];
   int currentRaw = 0;
   float voltage = 0;
   float current = 0;
+  float phaseCurrent = 0;
   float speed = 0;
   float rpm = 0;
   float acceleration = 0;
@@ -63,6 +66,7 @@ RP2040_PWM* PWM_Instance[6];
   int phaseTime2 = 0;
   int period = 0;
   int dutyCycle = 0;
+  int pulseCount = 0;
   uint32_t freqSwitchingDyn = 0;
 
   void setup() {
@@ -112,6 +116,9 @@ void loop()
   current = (currentRaw - 511.5) * 50 / 511.5;
   voltage = voltageRaw * 108.9 / 1023;
 
+  //Calculate phase current
+  phaseCurrent = (current * (255 / dutyCycle);
+
   // Read hall sensors
   int hallSensorAState = digitalRead(hallSensorAPin);
   int hallSensorBState = digitalRead(hallSensorBPin);
@@ -135,7 +142,7 @@ void loop()
   }
 
   //Derivatives calculation
-  if (lastAngle === currentAngle) {
+  if (lastAngle != currentAngle) {
   int phaseTime2 = phaseTime1;
   int phaseTime1 = (millis() - phaseTime0);
   int lastAngle = currentAngle;
@@ -154,6 +161,9 @@ void loop()
 
   //Motor commutation
          if (PWMMode == 1) { // Square wave, static frequency
+      if (dutyCycle > 250) {
+        dutyCycle = 250;
+      }
     if (currentAngle == 0) {
       //High Side
       PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitching, dutyCycle);
@@ -210,6 +220,9 @@ void loop()
       PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitching, 0);
     }
   } else if (PWMMode == 2) { // Square wave, dynamic frequency
+      if (dutyCycle > 250) {
+        dutyCycle = 250;
+      }
     if (currentAngle == 0) {
       //High Side
       PWM_Instance[1]->setPWM(phaseAGateHighPin, freqSwitchingDyn, dutyCycle);
@@ -272,6 +285,8 @@ void loop()
   } else if (PWMMode == 5) { // Multi pulse synchronous sine
 
   } else if (PWMMode == 6) { // Square wave tone
+
+  } else if (PWMMode == 7) { // Test
 
   }
 if (Serial.available() > 0) {
