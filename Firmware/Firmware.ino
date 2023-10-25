@@ -121,7 +121,7 @@ void loop()
   voltage = voltageRaw * 108.9 / 1023;
 
   //Calculate phase current
-  phaseCurrent = (current * (255 / dutyCycle);
+  phaseCurrent = (current * (255 / dutyCycle));
 
   // Read hall sensors
   int hallSensorAState = digitalRead(hallSensorAPin);
@@ -147,10 +147,10 @@ void loop()
 
   //Braking
   if (reverseDutyCycle > 0) {
-    analogWrite(ledR, 255):
+    analogWrite(ledR, 255);
     //Regen control loop here
   } else {
-    analogWrite(ledR, 0)
+    analogWrite(ledR, 0);
   }
 
   //Derivatives calculation
