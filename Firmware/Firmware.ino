@@ -25,9 +25,9 @@ RP2040_PWM* PWM_Instance[6];
   //PWMMode 7 = Power-on test
   
   // MOSFET pins
-  const int phaseAGateLowPin = 18;
+  const int phaseAGateLowPin = 20;
   const int phaseBGateLowPin = 19;
-  const int phaseCGateLowPin = 20;
+  const int phaseCGateLowPin = 18;
   const int phaseAGateHighPin = 23;
   const int phaseBGateHighPin = 22;
   const int phaseCGateHighPin = 21;
