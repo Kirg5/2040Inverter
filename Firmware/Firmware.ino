@@ -60,7 +60,7 @@ RP2040_PWM* PWM_Instance[6];
   float current = 0;
   float phaseCurrent = 0;
   float speed = 0;
-  float rpm = 0;
+  float RotationRate = 0;
   float acceleration = 0;
   float jerk = 0;
   int timer = 0;
@@ -146,30 +146,30 @@ void loop()
   }
 
   //Braking
-  if (reverseDutyCycle > 0) {
-    analogWrite(ledR, 255);
+  //if (reverseDutyCycle > 0) {
+    //analogWrite(ledR, 255);
     //Regen control loop here
-  } else {
-    analogWrite(ledR, 0);
-  }
+  //} else {
+    //analogWrite(ledR, 0);
+  //}
 
   //Derivatives calculation
-  if (lastAngle != currentAngle) {
-    int phaseTime2 = phaseTime1;
-    int phaseTime1 = (millis() - phaseTime0);
-    int lastAngle = currentAngle;
-    int phaseTime0 = millis();
-  }
+  //if (lastAngle != currentAngle) {
+    //int phaseTime2 = phaseTime1;
+    //int phaseTime1 = (millis() - phaseTime0);
+    //int lastAngle = currentAngle;
+    //int phaseTime0 = millis();
+ // }
   //add the shit for slope and exponent here
 
   //Calculate RPM
-  float rpm = (60000.0f/period/polePairs);
+  RotationRate = (60000.0f/period/polePairs);
 
   //Calculate Speed from RPM
-  float speed = (rpm * wheelSize * 0.00479);
+  speed = (RotationRate * wheelSize * 0.00479);
 
   //Placeholder dynamic frequency eqn
-  freqSwitchingDyn = ((rpm * 0.1) + 2000);
+  //freqSwitchingDyn = ((RotationRate * 0.1) + 2000);
 
   //Motor commutation
          if (PWMMode == 1) { // Square wave, static frequency
@@ -291,7 +291,7 @@ void loop()
       PWM_Instance[6]->setPWM(phaseCGateLowPin, freqSwitchingDyn, 0);
     }
   } else if (PWMMode == 3) { // Sine wave, static frequency
-      int estimatedAngle = (currentAngle + (phaseTime1 * idk));
+      //int estimatedAngle = (currentAngle + (phaseTime1 * idk));
   } else if (PWMMode == 4) { // Sine wave, dynamic frequency
 
   } else if (PWMMode == 5) { // Multi pulse synchronous sine
@@ -313,5 +313,9 @@ Serial.print("\t voltage = ");
 Serial.print(voltage);
 Serial.print("\t current = ");
 Serial.println(current);
+Serial.print("\t RPM = ");
+Serial.println(RotationRate);
+Serial.print("\t Velocity = ");
+Serial.println(speed);
   delay(0);
 }
