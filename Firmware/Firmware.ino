@@ -5,24 +5,14 @@
 RP2040_PWM* PWM_Instance[6];
 
   // Config Vars
-  int wheelSize = 26;
-  int polePairs = 42;
-  int maxForwardCurrent = 50;
-  int maxReverseCurrent = 10;
-  int seriesPairs = 20;
-  uint32_t multiPulse_minFreq = 2000;
-  uint32_t multiPulse_maxFreq = 30000;
-  uint32_t refenFreqSwitching = 1000;
-  uint32_t freqSwitching = 10000;
-  int PWMMode = 0; 
-
-  //PWMMode 0 = Power-on test
-  //PWMMode 1 = Square wave, static frequency
-  //PWMMode 2 = Square wave, dynamic frequency
-  //PWMMode 3 = Sine wave, static frequency
-  //PWMMode 4 = Sine wave, dynamic frequency
-  //PWMMode 5 = Multi pulse synchronous sine
-  //PWMMode 6 = Square wave tone
+  int wheelSize = 26;                 //Wheel diameter in inches
+  int polePairs = 42;                 //Motor pole pair count
+  int maxForwardCurrent = 50;         //Maximum acceleration current
+  int maxReverseCurrent = 10;         //Maximum regen braking current
+  int seriesPairs = 20;               //Battery series pairs 
+  int undervoltageThreshold = 15;     //Hard undervoltage cutoff to prevent mosfet underdriving
+  uint32_t refenFreqSwitching = 1000; //Static PWM frequency for regen braking
+  uint32_t freqSwitching = 2000;      //Static PWM frequency for acceleration
   
   // MOSFET pins
   const int phaseAGateLowPin = 20;
@@ -72,6 +62,14 @@ RP2040_PWM* PWM_Instance[6];
   int reverseDutyCycle = 0;
   int pulseCount = 0;
   uint32_t freqSwitchingDyn = 0;
+  int PWMMode = 0; 
+    //PWMMode 0 = Power-on test
+    //PWMMode 1 = Square wave, static frequency
+    //PWMMode 2 = Square wave, dynamic frequency
+    //PWMMode 3 = Sine wave, static frequency
+    //PWMMode 4 = Sine wave, dynamic frequency
+    //PWMMode 5 = Multi pulse synchronous sine
+    //PWMMode 6 = Square wave tone
 
   void setup() {
   analogWrite(Fan, 255);
@@ -360,9 +358,9 @@ Serial.print(currentAngle);
 Serial.print("\t voltage = ");
 Serial.print(voltage);
 Serial.print("\t current = ");
-Serial.println(current);
+Serial.print(current);
 Serial.print("\t RPM = ");
-Serial.println(RotationRate);
+Serial.print(RotationRate);
 Serial.print("\t Velocity = ");
 Serial.println(speed);
   delay(0);
