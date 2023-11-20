@@ -35,6 +35,6 @@ Wiring the inverter is fairly straightforward; there are 5 large power pads alon
 11. UartTX  (To display)
 12. UartRX  (To display)
 13. HallC   (Blue hall line, active low)
-14. HallB   (Yellow hall line, active low)
-15. HallA   (Green hall line, active low)
+14. HallB   (Green hall line, active low)
+15. HallA   (Yellow hall line, active low)
 16. GND
