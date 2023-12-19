@@ -2,7 +2,6 @@
  RP2040 Based BLDC Inverter for sensored motors, capable of putting out 50a 100v, for use in high power ebike/escooter applications.
  
 ![Inverter PCB](https://github.com/Kirg5/2040Inverter/blob/main/Images/PXL_20230803_063624892.jpg)
-
 ## Usage
 This is a standalone motor inverter, and not a complete motor controller. It does not contain any inputs for assist sensors or throttles as these are sent to the inverter over UART by a seperate MCU, located in the display. You can find the files for the display [here](https://github.com/Kirg5/RP2040-ILI9488-HUD). 
 
